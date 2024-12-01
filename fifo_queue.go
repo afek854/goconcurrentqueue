@@ -259,3 +259,22 @@ func (st *FIFO) IsLocked() bool {
 
 	return st.isLocked
 }
+
+func (st *FIFO) RemoveByValue(value interface{}) error {
+	if st.isLocked {
+		return NewQueueError(QueueErrorCodeLockedQueue, "The queue is locked")
+	}
+
+	st.rwmutex.Lock()
+	defer st.rwmutex.Unlock()
+
+	// Find the first occurrence of the value
+	for i, item := range st.slice {
+		if item == value {
+			st.slice = append(st.slice[:i], st.slice[i+1:]...)
+			return nil
+		}
+	}
+
+	return NewQueueError(QueueErrorCodeValueNotFound, fmt.Sprintf("value not found in queue: %v", value))
+}
